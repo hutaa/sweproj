@@ -123,15 +123,23 @@ button {
 }
 
 .course-node-container {
+    width: calc(100% - 20px);
+    height: auto;
+
     background-color: var(--node-bg-color);
     color: var(--primary-text-color);
+
     padding: 10px;
     border-radius: 10px;
 }
 
 .course-node-group-container {
+    width: 20vw;
+    height: auto;
+
     background-color: var(--background-color);
     color: var(--primary-text-color);
+
     padding: 10px;
     border-radius: 10px;
     border-width: 2px;
