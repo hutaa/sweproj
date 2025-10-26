@@ -5,17 +5,17 @@ import "../styles/Planner.css"
 
 function Draggable(props) {
     const {attributes, listeners, setNodeRef, transform} = useDraggable({
-      id: props.id,
+        id: props.id,
     });
 
     const style = transform ? {
-      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     } : undefined;
   
     return (
-      <button ref={setNodeRef} style={style} {...listeners} {...attributes}>
-        {props.children}
-      </button>
+        <button ref={setNodeRef} style={style} {...listeners} {...attributes}>
+            {props.children}
+        </button>
     );
 }
 
@@ -25,7 +25,7 @@ function Droppable(props) {
     });
 
     const style = {
-        color: isOver ? 'green' : undefined,
+        backgroundColor: isOver ? "rgba(0, 255, 0, 0.35)" : undefined,
     };
 
     return (
@@ -56,7 +56,7 @@ function SemesterGroup({semester_name, children})
             <div className="body-text">
                 {semester_name}
             </div>
-            <div className="course-node-group-container col-container" style={{gap: "12px"}}>
+            <div className="course-node-group-container col-container" style={{gap: "12px", minHeight: "60px"}}>
                 {children}
             </div>
         </Droppable>
@@ -153,8 +153,8 @@ function Planner()
             // Loop through all courses, checking whether they satisfy a prerequisite requirement.
             for (let i = 0; i < courses.length; i++)
             {
-                //Validates that the semester is non-null.
-                if (courses[i] && courses[i].semester)
+                // Validates that the semester is non-null.
+                if (i !== entry_id && courses[i] && courses[i].semester)
                 {
                     /*
                     console.log("New Iteration for " + courses[i]["course_code"]);
@@ -185,9 +185,46 @@ function Planner()
         return true;
     };
 
+    function CheckPrerequisitesMaintained(entry_id, proposed_semester)
+    {
+        var course_dependency = courses[entry_id];
+        var proposed_semester_val = SemesterToInt(proposed_semester);
+
+        console.log(proposed_semester_val);
+
+        for (let i = 0; i < courses.length; i++)
+        {
+            // Conduct initial validation checks.
+            if (i !== entry_id && courses[i] && courses[i]["semester"] && courses[i]["prerequisites"].length > 0)
+            {
+                // Checks if the course dependency is found in the prerequisites list of the current course being scanned.
+                if ((courses[i]["prerequisites"].includes(course_dependency["course_code"]) === true))
+                {
+                    // Checks if the newly proposed semester satisfies prerequisite requirements for the current course being scanned.
+                    if (0 < proposed_semester_val && proposed_semester_val < SemesterToInt(courses[i].semester))
+                    {
+                        // No further action is needed.
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
     function handleDragStart(event)
     {
         SetDragging(event.active);
+    };
+
+    function handleDragOver(event)
+    {
+        const {over} = event;
+
     };
 
     function handleDragEnd(event)
@@ -197,8 +234,8 @@ function Planner()
         // Checks if the object was dropped over a container.
         if (over)
         {
-            // Only allow the object to be dropped into the semester if its prerequisites were satisfied.
-            if (CheckPrerequisitesMet(dragging.id, over.id) === true)
+            // Only allow the object to be dropped into the semester if its prerequisites were satisfied and if the object doesn't invalidate dependent courses.
+            if (CheckPrerequisitesMet(dragging.id, over.id) === true && CheckPrerequisitesMaintained(dragging.id, over.id))
             {
                 SetCourses([...courses, courses[dragging.id].semester = over.id]);
             }
@@ -206,7 +243,11 @@ function Planner()
         // Handles the case for dropping the object over nothing.
         else
         {
-            SetCourses([...courses, courses[dragging.id].semester = null]);
+            // Checks if the object doesn't invalidate dependent courses.
+            if (CheckPrerequisitesMaintained(dragging.id, null) === true)
+            {
+                SetCourses([...courses, courses[dragging.id].semester = null]);
+            }
         }
     };
 
@@ -218,8 +259,7 @@ function Planner()
 
             <div style={{height: "12px"}} />
 
-            <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-
+            <DndContext onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
                 <div className="row-container" style={{gap: "12px"}}>
                     <div className="course-node-group-container col-container" style={{gap: "12px"}}>
                         {
