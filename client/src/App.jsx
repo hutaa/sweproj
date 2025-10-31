@@ -1,3 +1,4 @@
+import Menu from "./pages/Menu.jsx";
 import Planner from "./pages/Planner.jsx";
 
 function App() {
