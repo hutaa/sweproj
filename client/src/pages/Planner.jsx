@@ -225,8 +225,14 @@ function Planner() {
                     background-color: #f8f9fa;
                     border-right: 2px solid #dee2e6;
                     transition: width 0.3s ease;
-                    overflow: hidden;
                     flex-shrink: 0;
+                    height: 100vh;
+                    position: fixed;
+                    left: 0;
+                    top: 0;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
                 }
 
                 .sidebar.open {
@@ -255,6 +261,10 @@ function Planner() {
 
                 .sidebar-content {
                     padding: 1rem;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                    flex: 1;
+                    max-height: calc(100vh - 60px);
                 }
 
                 .category-section {
@@ -303,6 +313,12 @@ function Planner() {
                     min-height: 100vh;
                     background-color: white;
                     padding: 20px;
+                    margin-left: 50px;
+                    transition: margin-left 0.3s ease;
+                }
+
+                .sidebar.open ~ .page-container {
+                    margin-left: 320px;
                 }
 
                 .row-container {
