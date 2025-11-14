@@ -1,0 +1,119 @@
+/* Use Planner font */
+.transfer-courses-container,
+.transfer-courses-title,
+.transfer-table,
+.transfer-table th,
+.transfer-table td,
+.table-input,
+.btn,
+.btn-navigate {
+    font-family: 'AR One Sans', sans-serif;
+}
+
+/* Keep existing styles */
+.transfer-courses-container {
+    padding: 2rem;
+}
+
+.transfer-courses-title {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.table-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-x: auto;
+}
+
+.transfer-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.transfer-table thead {
+    background-color: #f5f5f5;
+}
+
+.transfer-table th {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+    font-weight: 600;
+}
+
+.transfer-table th.actions-column {
+    text-align: center;
+    width: 120px;
+}
+
+.transfer-table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+.transfer-table td {
+    padding: 0.75rem;
+}
+
+.transfer-table td.actions-cell {
+    text-align: center;
+}
+
+.table-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.table-input::placeholder {
+    color: #999;
+}
+
+.btn {
+    padding: 0.4rem 0.8rem;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.btn-add {
+    background-color: #4CAF50;
+    margin-right: 0.5rem;
+}
+
+.btn-add:hover {
+    background-color: #45a049;
+}
+
+.btn-delete {
+    background-color: #f44336;
+}
+
+.btn-delete:hover {
+    background-color: #da190b;
+}
+
+.navigation-container {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.btn-navigate {
+    padding: 0.6rem 1.2rem;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.btn-navigate:hover {
+    background-color: #0b7dda;
+}
