@@ -67,9 +67,10 @@ function PlannerPrototype()
 {
     const semesters = ["FA25", "SP26", "FA26"];
     const [courses, SetCourses] = useState([
-        {id: 0, semester: null, course_code: "TEST 123", course_desc: "Introduction to Testing 1", prerequisites: []},
-        {id: 1, semester: null, course_code: "TEST 234", course_desc: "Introduction to Testing 2", prerequisites: ["TEST 123"]},
-        {id: 2, semester: null, course_code: "TEST 345", course_desc: "Introduction to Testing 3", prerequisites: ["TEST 123", "TEST 234"]},
+        {id: 0, semester: null, course_code: "TEST 123", course_desc: "Testing 1", prerequisites: []},
+        {id: 1, semester: null, course_code: "TEST 234", course_desc: "Testing 2", prerequisites: [{type: "AND", courses:["TEST 123"]}]},
+        {id: 2, semester: null, course_code: "TEST 234H", course_desc: "Testing 2H", prerequisites: [{type: "AND", courses:["TEST 123"]}]},
+        {id: 3, semester: null, course_code: "TEST 345", course_desc: "Testing 3", prerequisites: [{type: "OR", courses: ["TEST 234", "TEST 234H"]}]},
     ]);
 
     const [dragging, SetDragging] = useState();
@@ -138,10 +139,39 @@ function PlannerPrototype()
     {
         var remaining_prerequisites = [];
 
-        //Populates remaining_prerequisites as a deep copy of the prerequisites.
+        /*
+            CNF Format (AND of OR Clauses)
+            [
+                [ENTRY1]
+                [ENTRY2]
+                [ENTRY3, ENTRY4, ENTRY5]
+            ]
+            Equal to ENTRY1 AND ENTRY2 AND (ENTRY3 OR ENTRY4 OR ENTRY5)
+        */
+
+        // Populates remaining_prerequisites as a deep copy of the prerequisites.
         for (let i = 0; i < courses[entry_id]["prerequisites"].length; i++)
         {
-            remaining_prerequisites.push(courses[entry_id]["prerequisites"][i]);
+            // Verify that the dictionary nested within the array is formatted correctly.
+            if (courses[entry_id]["prerequisites"][i]["type"] && courses[entry_id]["prerequisites"][i]["courses"])
+            {
+                if (courses[entry_id]["prerequisites"][i]["type"] === "AND")
+                {
+                    for (let v = 0; v < courses[entry_id]["prerequisites"][i]["courses"].length; v++)
+                    {
+                        remaining_prerequisites.push([courses[entry_id]["prerequisites"][i]["courses"][v]]);
+                    }
+                }
+                else //if (courses[entry_id]["prerequisites"][i]["type"] === "OR")
+                {
+                    var clause = [];
+                    for (let v = 0; v < courses[entry_id]["prerequisites"][i]["courses"].length; v++)
+                    {
+                        clause.push(courses[entry_id]["prerequisites"][i]["courses"][v]);
+                    }
+                    remaining_prerequisites.push(clause);
+                }
+            }
         }
 
         var proposed_semester_val = SemesterToInt(proposed_semester);
@@ -153,31 +183,57 @@ function PlannerPrototype()
             // Loop through all courses, checking whether they satisfy a prerequisite requirement.
             for (let i = 0; i < courses.length; i++)
             {
-                // Validates that the semester is non-null.
-                if (i !== entry_id && courses[i] && courses[i].semester)
+                // Validates that the semester is non-null and if the specific course is included in an earlier semester
+                if (i !== entry_id && courses[i] && courses[i].semester && (SemesterToInt(courses[i].semester) < proposed_semester_val))
                 {
-                    /*
-                    console.log("New Iteration for " + courses[i]["course_code"]);
-                    console.log((SemesterToInt(courses[i].semester) < proposed_semester_val) + ", " + (remaining_prerequisites.includes(courses[i]["course_code"]) === true));
+                    // Loop through all prerequisites clauses.
                     for (let v = 0; v < remaining_prerequisites.length; v++)
                     {
-                        console.log(remaining_prerequisites[v]);
-                    }
-                    */
-
-                    // Checks if it's found in the prerequisites list and if the specific course is included in an earlier semester.
-                    if ((SemesterToInt(courses[i].semester) < proposed_semester_val) && (remaining_prerequisites.includes(courses[i]["course_code"]) === true))
-                    {
-                        // Removes the element from the list of remaining prerequisites.
-                        remaining_prerequisites.splice(remaining_prerequisites.findIndex((element) => element === courses[i]["course_code"]), 1);
-                        
-                        if (remaining_prerequisites.length === 0)
+                        // Checks if the specific course is found in the prerequisites clause list.
+                        if (remaining_prerequisites[v] && remaining_prerequisites[v].includes(courses[i]["course_code"]) === true)
                         {
-                            return true;
+                            // Removes the clause from the list of remaining prerequisites.
+                            remaining_prerequisites.splice(v, 1);
+
+                            // Queue another check at the current index again. 
+                            v -= 1;
+                            
+                            if (remaining_prerequisites.length === 0)
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
             }
+            
+            // Prerequisites have not been satisfied.
+
+            var return_msg = "Missing ";
+            for (let i = 0; i < remaining_prerequisites.length; i++)
+            {
+                if (i > 0)
+                {
+                    return_msg += ", (";
+                }
+                else
+                {
+                    return_msg += "(";
+                }
+
+                for (let v = 0; v < remaining_prerequisites[i].length; v++)
+                {
+                    if (v > 0)
+                    {
+                        return_msg += " or ";
+                    }
+                    return_msg += remaining_prerequisites[i][v];
+                }
+
+                return_msg += ")";
+            }
+
+            console.log(return_msg);
 
             return false;
         }
@@ -187,27 +243,76 @@ function PlannerPrototype()
 
     function CheckPrerequisitesMaintained(entry_id, proposed_semester)
     {
-        var course_dependency = courses[entry_id];
+        var dragged_course = courses[entry_id];
         var proposed_semester_val = SemesterToInt(proposed_semester);
+        var dependents = [];
 
-        console.log(proposed_semester_val);
+        //console.log(proposed_semester_val);
 
         for (let i = 0; i < courses.length; i++)
         {
             // Conduct initial validation checks.
-            if (i !== entry_id && courses[i] && courses[i]["semester"] && courses[i]["prerequisites"].length > 0)
+            if (i !== entry_id && courses[i] && courses[i]["semester"] && courses[i]["prerequisites"] && courses[i]["prerequisites"].length > 0)
             {
-                // Checks if the course dependency is found in the prerequisites list of the current course being scanned.
-                if ((courses[i]["prerequisites"].includes(course_dependency["course_code"]) === true))
+                for (let v = 0; v < courses[i]["prerequisites"].length; v++)
                 {
-                    // Checks if the newly proposed semester satisfies prerequisite requirements for the current course being scanned.
-                    if (0 < proposed_semester_val && proposed_semester_val < SemesterToInt(courses[i].semester))
+                    // For AND clause, checks if the dragged course is found in the prerequisites list of the current course being scanned.
+                    if (courses[i]["prerequisites"][v]["type"] === "AND" && courses[i]["prerequisites"][v]["courses"].includes(dragged_course["course_code"]) === true)
                     {
-                        // No further action is needed.
+                        // Checks if the newly proposed semester does not satisfy prerequisite requirements for the current course being scanned.
+                        if ((0 < proposed_semester_val && proposed_semester_val < SemesterToInt(courses[i].semester)) === false)
+                        {
+                            var return_msg = courses[i]["course_code"] + " is dependent on " + dragged_course["course_code"];
+
+                            console.log(return_msg);
+
+                            return false;
+                        }
                     }
-                    else
+
+                    // For OR clause, checks if the dragged course is found in the prerequisites list of the current course being scanned.
+                    if (courses[i]["prerequisites"][v]["type"] === "OR" && courses[i]["prerequisites"][v]["courses"].includes(dragged_course["course_code"]) === true)
                     {
-                        return false;
+                        // Two Cases: Dragged course is the sole dependency in the clause, or dragged course isn't needed to fulfill the dependency.
+                        
+                        var clause_satisfied = false; // Only evaluates to true when the OR clause can be satisfied by a course.
+
+                        for (let c = 0; c < courses[i]["prerequisites"][v]["courses"].length; c++)
+                        {
+                            //console.log(courses[i]["prerequisites"][v]["courses"][c] === dragged_course["course_code"]);
+
+                            // Checks if the current prerequisite course is also the dragged course.
+                            if (courses[i]["prerequisites"][v]["courses"][c] === dragged_course["course_code"])
+                            {
+                                // Checks if the newly proposed semester satisfies prerequisite requirements for the current course being scanned.
+                                if ((0 < proposed_semester_val && proposed_semester_val < SemesterToInt(courses[i].semester)) === true)
+                                {
+                                    clause_satisfied = true;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                // Searches for the potentially active prerequisite.
+                                var foundIndex = courses.findIndex((element) => element["course_code"] === courses[i]["prerequisites"][v]["courses"][c]);
+                                
+                                // Checks that the prerequisite course can satisfy the current course being scanned.
+                                if (foundIndex !== -1 && 0 < SemesterToInt(courses[foundIndex].semester) && SemesterToInt(courses[foundIndex].semester) < SemesterToInt(courses[i].semester))
+                                {
+                                    clause_satisfied = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (courses[i]["prerequisites"][v]["courses"].length > 0 && clause_satisfied === false)
+                        {
+                            var return_msg = courses[i]["course_code"] + " Requires Prerequisite " + dragged_course["course_code"];
+
+                            console.log(return_msg);
+
+                            return false;
+                        }
                     }
                 }
             }
