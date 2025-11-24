@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import {DndContext, useDraggable, useDroppable} from "@dnd-kit/core";
-import "../styles/Planner.css";
 
-function Draggable({ id, children, onDragStart }) {
+function Draggable({ id, children, onDragStart, disabled }) {
     const handleDragStart = (e) => {
+        if (disabled) {
+            e.preventDefault();
+            return;
+        }
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/plain", id);
         if (onDragStart) onDragStart(id);
@@ -11,10 +13,10 @@ function Draggable({ id, children, onDragStart }) {
 
     return (
         <div
-            draggable="true"
+            draggable={!disabled}
             onDragStart={handleDragStart}
             style={{
-                cursor: "grab",
+                cursor: disabled ? "not-allowed" : "grab",
                 userSelect: "none",
             }}
         >
@@ -63,12 +65,41 @@ function Droppable({ id, children, onDrop }) {
     );
 }
 
-function CourseNode({ course_id, course_code, course_desc, onDragStart }) {
+function CourseNode({ course_id, course_code, course_desc, onDragStart, transferred }) {
     return (
-        <Draggable id={course_id.toString()} onDragStart={onDragStart}>
-            <div className="course-node-container">
-                <div className="body-text">{course_code}</div>
-                {course_desc && <div className="body-text">{course_desc}</div>}
+        <Draggable id={course_id.toString()} onDragStart={onDragStart} disabled={transferred}>
+            <div style={{
+                padding: '10px',
+                backgroundColor: transferred ? '#e0e0e0' : '#e3f2fd',
+                border: transferred ? '1px solid #9e9e9e' : '1px solid #2196f3',
+                borderRadius: '6px',
+                marginBottom: '8px',
+                opacity: transferred ? 0.6 : 1,
+                position: 'relative'
+            }}>
+                {transferred && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '5px',
+                        right: '5px',
+                        backgroundColor: '#757575',
+                        color: 'white',
+                        fontSize: '9px',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        fontWeight: '600'
+                    }}>
+                        TRANSFERRED
+                    </div>
+                )}
+                <div style={{ fontWeight: '600', marginBottom: '4px', color: transferred ? '#666' : '#000' }}>
+                    {course_code}
+                </div>
+                {course_desc && (
+                    <div style={{ fontSize: '12px', color: transferred ? '#888' : '#555' }}>
+                        {course_desc}
+                    </div>
+                )}
             </div>
         </Draggable>
     );
@@ -77,13 +108,54 @@ function CourseNode({ course_id, course_code, course_desc, onDragStart }) {
 function SemesterGroup({ semester_name, children, onDrop }) {
     return (
         <Droppable id={semester_name} onDrop={onDrop}>
-            <div className="body-text">
-                {semester_name}
-            </div>
-            <div className="course-node-group-container col-container" style={{ gap: "12px", minHeight: "60px" }}>
-                {children}
+            <div style={{ 
+                padding: '15px',
+                backgroundColor: '#f9f9f9',
+                border: '2px dashed #ccc',
+                borderRadius: '8px',
+                minHeight: '400px'
+            }}>
+                <div style={{ fontWeight: '600', marginBottom: '12px', fontSize: '16px', color: '#333' }}>
+                    {semester_name}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '60px' }}>
+                    {children}
+                </div>
             </div>
         </Droppable>
+    );
+}
+
+// Modal Component
+function Modal({ isOpen, onClose, children }) {
+    if (!isOpen) return null;
+
+    return (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+        }}>
+            <div style={{
+                backgroundColor: 'white',
+                padding: '30px',
+                borderRadius: '8px',
+                minWidth: '400px',
+                maxWidth: '600px',
+                maxHeight: '80vh',
+                overflow: 'auto',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+            }}>
+                {children}
+            </div>
+        </div>
     );
 }
 
@@ -104,66 +176,74 @@ function Planner() {
         }));
     };
 
-    const semesters = ["FA25", "SP26", "FA26"];
+    const semesters = ["F26", "S27", "F27", "S28", "F28", "S29", "F29", "S30"];
     const [courses, SetCourses] = useState([]);
     const [nextCourseId, setNextCourseId] = useState(1000);
     const [draggingFrom, setDraggingFrom] = useState(null);
 
-    console.log(courses);
+    // Modal states
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [showLoadModal, setShowLoadModal] = useState(false);
+    const [saveTitle, setSaveTitle] = useState('');
+    const [saveDescription, setSaveDescription] = useState('');
+    const [savedPlans, setSavedPlans] = useState([
+        { id: 1, title: "Fall 2025 Plan", description: "My initial course planning", date: "2024-11-20" },
+        { id: 2, title: "Spring 2026 Plan", description: "Updated plan for spring semester", date: "2024-11-21" }
+    ]);
 
     const courseCatalog = [
         {
             category: "GEP", items: [
-                { id: "ENGL100", code: "ENGL 100", placeholder: "N/A" },
-                { id: "GEP-AH", code: "N/A", placeholder: "Arts and Humanities", count: 2 },
-                { id: "GEP-SS", code: "N/A", placeholder: "Social Sciences", count: 3 },
-                { id: "MATH151", code: "MATH 151", placeholder: "N/A" },
-                { id: "MATH152", code: "MATH 152", placeholder: "N/A", prerequisites: ["MATH 151"] },
-                { id: "MATH221", code: "MATH 221", placeholder: "N/A" },
-                { id: "STAT355", code: "STAT 355", placeholder: "N/A" },
-                { id: "GEP-SCI", code: "N/A", placeholder: "Science Sequence", count: 2 },
-                { id: "GEP-LAB", code: "N/A", placeholder: "Science Lab", count: 1 },
-                { id: "GEP-CULT", code: "N/A", placeholder: "Culture", count: 1 },
-                { id: "GEP-LANG", code: "N/A", placeholder: "Language (Level 201+)", count: 1 }
+                { id: "ENGL100", code: "ENGL 100", placeholder: "N/A", transferred: true },
+                { id: "GEP-AH", code: "N/A", placeholder: "Arts and Humanities", count: 2, transferred: false },
+                { id: "GEP-SS", code: "N/A", placeholder: "Social Sciences", count: 3, transferred: false, partialTransfer: { completed: 2, total: 3 } },
+                { id: "MATH151", code: "MATH 151", placeholder: "N/A", transferred: true },
+                { id: "MATH152", code: "MATH 152", placeholder: "N/A", prerequisites: ["MATH 151"], transferred: true },
+                { id: "MATH221", code: "MATH 221", placeholder: "N/A", transferred: true },
+                { id: "STAT355", code: "STAT 355", placeholder: "N/A", transferred: false },
+                { id: "GEP-SCI", code: "N/A", placeholder: "Science Sequence", count: 2, transferred: true },
+                { id: "GEP-LAB", code: "N/A", placeholder: "Science Lab", count: 1, transferred: false },
+                { id: "GEP-CULT", code: "N/A", placeholder: "Culture", count: 1, transferred: false },
+                { id: "GEP-LANG", code: "N/A", placeholder: "Language (Level 201+)", count: 1, transferred: false }
             ]
         },
         {
             category: "Gateway", items: [
-                { id: "CMSC201", code: "CMSC 201", placeholder: "N/A", prerequisites: ["MATH 151"] },
-                { id: "CMSC202", code: "CMSC 202", placeholder: "N/A", prerequisites: ["CMSC 202"] },
-                { id: "CMSC203", code: "CMSC 203", placeholder: "N/A", prerequisites: ["MATH 151"] }
+                { id: "CMSC201", code: "CMSC 201", placeholder: "N/A", prerequisites: ["MATH 151"], transferred: true },
+                { id: "CMSC202", code: "CMSC 202", placeholder: "N/A", prerequisites: ["CMSC 201"], transferred: false },
+                { id: "CMSC203", code: "CMSC 203", placeholder: "N/A", prerequisites: ["MATH 151"], transferred: false }
             ]
         },
         {
             category: "Core", items: [
-                { id: "CMSC304", code: "CMSC 304", placeholder: "N/A" },
-                { id: "CMSC313", code: "CMSC 313", placeholder: "N/A" },
-                { id: "CMSC331", code: "CMSC 331", placeholder: "N/A" },
-                { id: "CMSC341", code: "CMSC 341", placeholder: "N/A" },
-                { id: "CMSC447", code: "CMSC 447", placeholder: "N/A" },
-                { id: "CMSC411", code: "CMSC 411", placeholder: "N/A" },
-                { id: "CMSC421", code: "CMSC 421", placeholder: "N/A" },
-                { id: "CMSC441", code: "CMSC 441", placeholder: "N/A" }
+                { id: "CMSC304", code: "CMSC 304", placeholder: "N/A", transferred: false },
+                { id: "CMSC313", code: "CMSC 313", placeholder: "N/A", transferred: false },
+                { id: "CMSC331", code: "CMSC 331", placeholder: "N/A", transferred: false },
+                { id: "CMSC341", code: "CMSC 341", placeholder: "N/A", transferred: false },
+                { id: "CMSC447", code: "CMSC 447", placeholder: "N/A", transferred: false },
+                { id: "CMSC411", code: "CMSC 411", placeholder: "N/A", transferred: false },
+                { id: "CMSC421", code: "CMSC 421", placeholder: "N/A", transferred: false },
+                { id: "CMSC441", code: "CMSC 441", placeholder: "N/A", transferred: false }
             ]
         },
         {
             category: "Elective", items: [
-                { id: "CMSC426", code: "CMSC 426", placeholder: "N/A" },
-                { id: "CMSC431", code: "CMSC 431", placeholder: "N/A" },
-                { id: "CMSC435", code: "CMSC 435", placeholder: "N/A" },
-                { id: "CMSC448", code: "CMSC 448", placeholder: "N/A" },
-                { id: "CMSC451", code: "CMSC 451", placeholder: "N/A" },
-                { id: "CMSC455", code: "CMSC 455", placeholder: "N/A" },
-                { id: "CMSC456", code: "CMSC 456", placeholder: "N/A" },
-                { id: "CMSC461", code: "CMSC 461", placeholder: "N/A" },
-                { id: "CMSC471", code: "CMSC 471", placeholder: "N/A" },
-                { id: "CMSC481", code: "CMSC 481", placeholder: "N/A" },
-                { id: "CMSC483", code: "CMSC 483", placeholder: "N/A" }
+                { id: "CMSC426", code: "CMSC 426", placeholder: "N/A", transferred: false },
+                { id: "CMSC431", code: "CMSC 431", placeholder: "N/A", transferred: false },
+                { id: "CMSC435", code: "CMSC 435", placeholder: "N/A", transferred: false },
+                { id: "CMSC448", code: "CMSC 448", placeholder: "N/A", transferred: false },
+                { id: "CMSC451", code: "CMSC 451", placeholder: "N/A", transferred: false },
+                { id: "CMSC455", code: "CMSC 455", placeholder: "N/A", transferred: false },
+                { id: "CMSC456", code: "CMSC 456", placeholder: "N/A", transferred: false },
+                { id: "CMSC461", code: "CMSC 461", placeholder: "N/A", transferred: false },
+                { id: "CMSC471", code: "CMSC 471", placeholder: "N/A", transferred: false },
+                { id: "CMSC481", code: "CMSC 481", placeholder: "N/A", transferred: false },
+                { id: "CMSC483", code: "CMSC 483", placeholder: "N/A", transferred: false }
             ]
         },
         {
             category: "Technical Elective", items: [
-                { id: "TECH-ELEC-1", code: "N/A", placeholder: "Technical Elective", count: 3 }
+                { id: "TECH-ELEC-1", code: "N/A", placeholder: "Technical Elective", count: 3, transferred: false }
             ]
         }
     ];
@@ -173,46 +253,46 @@ function Planner() {
     };
 
     const handleDrop = (draggedId, targetSemester) => {
-        // Check if dragging from catalog (string IDs with letters)
         const isFromCatalog = isNaN(Number(draggedId));
 
         if (isFromCatalog) {
-            // Adding new course from catalog
             const catalogItem = courseCatalog
                 .flatMap(cat => cat.items)
                 .find(item => item.id === draggedId);
 
-            if (catalogItem) {
+            if (catalogItem && !catalogItem.transferred) {
                 const newCourse = {
                     id: nextCourseId,
                     semester: targetSemester,
                     course_code: catalogItem.code !== "N/A" ? catalogItem.code : catalogItem.placeholder,
                     course_desc: "",
-                    prerequisites: [catalogItem.prerequisites !== null ? catalogItem.prerequisites : null]
+                    prerequisites: catalogItem.prerequisites || [],
+                    transferred: catalogItem.transferred || false
                 };
 
                 SetCourses(prev => [...prev, newCourse]);
                 setNextCourseId(prev => prev + 1);
             }
         } else {
-            // Moving existing course between semesters
             const courseId = Number(draggedId);
-            SetCourses(prev =>
-                prev.map(course =>
-                    course.id === courseId ? { ...course, semester: targetSemester } : course
-                )
-            );
+            const course = courses.find(c => c.id === courseId);
+            
+            if (course && !course.transferred) {
+                SetCourses(prev =>
+                    prev.map(course =>
+                        course.id === courseId ? { ...course, semester: targetSemester } : course
+                    )
+                );
+            }
         }
 
         setDraggingFrom(null);
     };
 
     const handleSidebarDrop = (draggedId) => {
-        // Only remove courses (numeric IDs), not catalog items
         const isFromCatalog = isNaN(Number(draggedId));
         
         if (!isFromCatalog) {
-            // Remove the course from the plan
             const courseId = Number(draggedId);
             SetCourses(prev => prev.filter(course => course.id !== courseId));
         }
@@ -220,194 +300,153 @@ function Planner() {
         setDraggingFrom(null);
     };
 
-    /*
-
-    Parsing Semesters as Integers:
-        20261 for WI2026
-        20262 for SP2026
-        20263 for SU2026
-        20264 for FA2026
-
-    Alternative Scheme:
-        261 for WI2026
-        262 for SP2026
-        263 for SU2026
-        264 for FA2026
-
-    Format:
-        First 2 or 4 Digits for Year
-        Last Digit for Season
-    
-    Numeric sorting results in chronological order.
-
-    */
-
-    function SemesterToInt(semester)
-    {
-        if (semester)
-        {
-            var temp = String(semester);
-            temp = temp.substring(0, 2);
-
-            // Compute last digit of the number.
-            if (temp === "WI")
-            {
-                temp = 1;
-            }
-            else if (temp === "SP")
-            {
-                temp = 2;
-            }
-            else if (temp === "SU")
-            {
-                temp = 3;
-            }
-            else if (temp === "FA")
-            {
-                temp = 4;
-            }
-            
-            // Checks if a valid substring was read.
-            if (Number.isInteger(temp) === true)
-            {
-                return parseInt(semester.substring(2, 6)) * 10 + temp;
-            }
-        }
-        
-        // Return invalid semesters as 0.
-        return 0;
-    }
-
-    function CheckPrerequisitesMet(entry_id, proposed_semester)
-    {
-        var remaining_prerequisites = [];
-
-        //Populates remaining_prerequisites as a deep copy of the prerequisites.
-        for (let i = 0; i < courses[entry_id]["prerequisites"].length; i++)
-        {
-            remaining_prerequisites.push(courses[entry_id]["prerequisites"][i]);
+    // Save Plan Handler
+    const handleSavePlan = () => {
+        if (!saveTitle.trim()) {
+            alert('Please enter a title for your plan');
+            return;
         }
 
-        var proposed_semester_val = SemesterToInt(proposed_semester);
+        const newPlan = {
+            id: Date.now(),
+            title: saveTitle,
+            description: saveDescription,
+            date: new Date().toISOString().split('T')[0],
+            courses: courses
+        };
 
-        //console.log("Prerequisites Check Starting, checking for " + remaining_prerequisites.length + " prerequisites.");
-
-        if (remaining_prerequisites.length > 0)
-        {
-            // Loop through all courses, checking whether they satisfy a prerequisite requirement.
-            for (let i = 0; i < courses.length; i++)
-            {
-                // Validates that the semester is non-null.
-                if (i !== entry_id && courses[i] && courses[i].semester)
-                {
-                    /*
-                    console.log("New Iteration for " + courses[i]["course_code"]);
-                    console.log((SemesterToInt(courses[i].semester) < proposed_semester_val) + ", " + (remaining_prerequisites.includes(courses[i]["course_code"]) === true));
-                    for (let v = 0; v < remaining_prerequisites.length; v++)
-                    {
-                        console.log(remaining_prerequisites[v]);
-                    }
-                    */
-
-                    // Checks if it's found in the prerequisites list and if the specific course is included in an earlier semester.
-                    if ((SemesterToInt(courses[i].semester) < proposed_semester_val) && (remaining_prerequisites.includes(courses[i]["course_code"]) === true))
-                    {
-                        // Removes the element from the list of remaining prerequisites.
-                        remaining_prerequisites.splice(remaining_prerequisites.findIndex((element) => element === courses[i]["course_code"]), 1);
-                        
-                        if (remaining_prerequisites.length === 0)
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        return true;
+        setSavedPlans([...savedPlans, newPlan]);
+        setSaveTitle('');
+        setSaveDescription('');
+        setShowSaveModal(false);
+        alert('Plan saved successfully!');
     };
 
-    function CheckPrerequisitesMaintained(entry_id, proposed_semester)
-    {
-        var course_dependency = courses[entry_id];
-        var proposed_semester_val = SemesterToInt(proposed_semester);
-
-        console.log(proposed_semester_val);
-
-        for (let i = 0; i < courses.length; i++)
-        {
-            // Conduct initial validation checks.
-            if (i !== entry_id && courses[i] && courses[i]["semester"] && courses[i]["prerequisites"].length > 0)
-            {
-                // Checks if the course dependency is found in the prerequisites list of the current course being scanned.
-                if ((courses[i]["prerequisites"].includes(course_dependency["course_code"]) === true))
-                {
-                    // Checks if the newly proposed semester satisfies prerequisite requirements for the current course being scanned.
-                    if (0 < proposed_semester_val && proposed_semester_val < SemesterToInt(courses[i].semester))
-                    {
-                        // No further action is needed.
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
+    // Load Plan Handler
+    const handleLoadPlan = (plan) => {
+        if (window.confirm(`Load plan "${plan.title}"? This will replace your current plan.`)) {
+            if (plan.courses) {
+                SetCourses(plan.courses);
             }
+            setShowLoadModal(false);
+            alert('Plan loaded successfully!');
         }
+    };
 
-        return true;
-    }
+    // Export Plan Handler
+    const handleExportPlan = () => {
+        const planData = {
+            title: saveTitle || 'Course Plan',
+            exportDate: new Date().toISOString(),
+            courses: courses,
+            semesters: semesters
+        };
 
-    function handleDragEnd(event)
-    {
-        const {over} = event;
-
-        // Checks if the object was dropped over a container.
-        if (over)
-        {
-            // Only allow the object to be dropped into the semester if its prerequisites were satisfied and if the object doesn't invalidate dependent courses.
-            if (CheckPrerequisitesMet(draggingFrom.id, over.id) === true && CheckPrerequisitesMaintained(draggingFrom.id, over.id))
-            {
-                SetCourses([...courses, courses[draggingFrom.id].semester = over.id]);
-            }
-        }
-        // Handles the case for dropping the object over nothing.
-        else
-        {
-            // Checks if the object doesn't invalidate dependent courses.
-            if (CheckPrerequisitesMaintained(draggingFrom.id, null) === true)
-            {
-                SetCourses([...courses, courses[draggingFrom.id].semester = null]);
-            }
-        }
+        const dataStr = JSON.stringify(planData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${saveTitle || 'course-plan'}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        alert('Plan exported successfully!');
     };
 
     return (
-        <div style={{ display: 'flex', width: '100%', minHeight: '100vh' }}>
-            <div className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-                <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+        <div style={{ display: 'flex', width: '100%', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+            <div style={{
+                width: sidebarOpen ? '300px' : '50px',
+                backgroundColor: '#f5f5f5',
+                borderRight: '1px solid #ddd',
+                transition: 'width 0.3s',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <button 
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        padding: '5px 10px',
+                        backgroundColor: '#2196f3',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        zIndex: 10
+                    }}
+                >
                     {sidebarOpen ? '◀' : '▶'}
                 </button>
                 {sidebarOpen && (
                     <Droppable id="sidebar" onDrop={handleSidebarDrop}>
-                        <div className="sidebar-content">
+                        <div style={{ padding: '50px 15px 15px 15px' }}>
                             {courseCatalog.map((categoryGroup) => (
-                                <div key={categoryGroup.category} className="category-section">
+                                <div key={categoryGroup.category} style={{ marginBottom: '15px' }}>
                                     <div
-                                        className="category-header"
                                         onClick={() => toggleCategory(categoryGroup.category)}
-                                        style={{ cursor: 'pointer' }}
+                                        style={{ 
+                                            cursor: 'pointer',
+                                            fontWeight: '600',
+                                            padding: '8px',
+                                            backgroundColor: '#e0e0e0',
+                                            borderRadius: '4px',
+                                            marginBottom: '8px'
+                                        }}
                                     >
                                         <span>{expandedCategories[categoryGroup.category] ? '▼' : '▶'}</span>
                                         <span style={{ marginLeft: '8px' }}>{categoryGroup.category}</span>
                                     </div>
                                     {expandedCategories[categoryGroup.category] && categoryGroup.items.map((item) => (
-                                        <Draggable key={item.id} id={item.id} onDragStart={handleDragStart}>
-                                            <div className="catalog-item">
+                                        <Draggable key={item.id} id={item.id} onDragStart={handleDragStart} disabled={item.transferred}>
+                                            <div style={{
+                                                padding: '8px',
+                                                marginBottom: '5px',
+                                                backgroundColor: item.transferred ? '#e0e0e0' : 'white',
+                                                border: item.transferred ? '1px solid #9e9e9e' : '1px solid #ddd',
+                                                borderRadius: '4px',
+                                                fontSize: '13px',
+                                                opacity: item.transferred ? 0.6 : 1,
+                                                position: 'relative'
+                                            }}>
+                                                {item.transferred && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '3px',
+                                                        right: '3px',
+                                                        backgroundColor: '#757575',
+                                                        color: 'white',
+                                                        fontSize: '8px',
+                                                        padding: '1px 4px',
+                                                        borderRadius: '2px',
+                                                        fontWeight: '600'
+                                                    }}>
+                                                        TRANSFERRED
+                                                    </div>
+                                                )}
+                                                {item.partialTransfer && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '3px',
+                                                        right: '3px',
+                                                        backgroundColor: '#ff9800',
+                                                        color: 'white',
+                                                        fontSize: '8px',
+                                                        padding: '1px 4px',
+                                                        borderRadius: '2px',
+                                                        fontWeight: '600'
+                                                    }}>
+                                                        {item.partialTransfer.completed}/{item.partialTransfer.total} DONE
+                                                    </div>
+                                                )}
                                                 {item.code !== "N/A" ? item.code : item.placeholder}
-                                                {item.count && ` (${item.count})`}
+                                                {item.count && !item.partialTransfer && ` (${item.count})`}
+                                                {item.partialTransfer && ` (${item.partialTransfer.total - item.partialTransfer.completed} needed)`}
                                             </div>
                                         </Draggable>
                                     ))}
@@ -418,37 +457,241 @@ function Planner() {
                 )}
             </div>
 
-            <div className="page-container">
-                <button className="nav-btn" onClick={() => window.location.href = '/'}>
-                    ← Back to Page 1
-                </button>
+            <div style={{ flex: 1, padding: '20px' }}>
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    marginBottom: '20px'
+                }}>
+                    <button 
+                        onClick={() => window.location.href = '/'}
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: '#f0f0f0',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        ← Back
+                    </button>
 
-                <div className="medium-text">
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button 
+                            onClick={() => setShowSaveModal(true)}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: '#4caf50',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}
+                        >
+                            💾 Save Plan
+                        </button>
+                        <button 
+                            onClick={() => setShowLoadModal(true)}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: '#2196f3',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}
+                        >
+                            📂 Load Plan
+                        </button>
+                        <button 
+                            onClick={handleExportPlan}
+                            style={{
+                                padding: '10px 20px',
+                                backgroundColor: '#ff9800',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}
+                        >
+                            📥 Export Plan
+                        </button>
+                    </div>
+                </div>
+
+                <div style={{ fontSize: '24px', fontWeight: '600', marginBottom: '20px' }}>
                     Course Plan
                 </div>
 
-                <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                    <div className="row-container">
-                        {semesters.map((semester) => (
-                            <div key={semester}>
-                                <SemesterGroup semester_name={semester} onDrop={handleDrop}>
-                                    {courses
-                                        .filter((course) => course && course.semester === semester)
-                                        .map((course) => (
-                                            <CourseNode
-                                                key={course.id}
-                                                course_id={course.id}
-                                                course_code={course.course_code}
-                                                course_desc={course.course_desc}
-                                                onDragStart={handleDragStart}
-                                            />
-                                        ))}
-                                </SemesterGroup>
+                <div style={{ 
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '20px',
+                    marginBottom: '20px'
+                }}>
+                    {semesters.map((semester) => (
+                        <div key={semester} style={{ minWidth: '0' }}>
+                            <SemesterGroup semester_name={semester} onDrop={handleDrop}>
+                                {courses
+                                    .filter((course) => course && course.semester === semester)
+                                    .map((course) => (
+                                        <CourseNode
+                                            key={course.id}
+                                            course_id={course.id}
+                                            course_code={course.course_code}
+                                            course_desc={course.course_desc}
+                                            onDragStart={handleDragStart}
+                                            transferred={course.transferred}
+                                        />
+                                    ))}
+                            </SemesterGroup>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Save Plan Modal */}
+            <Modal isOpen={showSaveModal} onClose={() => setShowSaveModal(false)}>
+                <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>Save Plan</h2>
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#555' }}>
+                        Plan Title *
+                    </label>
+                    <input
+                        type="text"
+                        value={saveTitle}
+                        onChange={(e) => setSaveTitle(e.target.value)}
+                        placeholder="e.g., Fall 2025 Course Plan"
+                        style={{
+                            width: '100%',
+                            padding: '10px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            fontSize: '14px',
+                            boxSizing: 'border-box'
+                        }}
+                    />
+                </div>
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#555' }}>
+                        Description
+                    </label>
+                    <textarea
+                        value={saveDescription}
+                        onChange={(e) => setSaveDescription(e.target.value)}
+                        placeholder="Add notes about this plan..."
+                        rows={4}
+                        style={{
+                            width: '100%',
+                            padding: '10px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            fontSize: '14px',
+                            boxSizing: 'border-box',
+                            resize: 'vertical'
+                        }}
+                    />
+                </div>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                    <button
+                        onClick={() => setShowSaveModal(false)}
+                        style={{
+                            padding: '10px 20px',
+                            backgroundColor: '#f0f0f0',
+                            color: '#333',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                        }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSavePlan}
+                        style={{
+                            padding: '10px 20px',
+                            backgroundColor: '#4caf50',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500'
+                        }}
+                    >
+                        Save Plan
+                    </button>
+                </div>
+            </Modal>
+
+            {/* Load Plan Modal */}
+            <Modal isOpen={showLoadModal} onClose={() => setShowLoadModal(false)}>
+                <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>Load Plan</h2>
+                {savedPlans.length === 0 ? (
+                    <p style={{ color: '#666', textAlign: 'center', padding: '20px' }}>
+                        No saved plans yet. Save your current plan to see it here!
+                    </p>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {savedPlans.map((plan) => (
+                            <div
+                                key={plan.id}
+                                onClick={() => handleLoadPlan(plan)}
+                                style={{
+                                    padding: '15px',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    backgroundColor: 'white'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                                    e.currentTarget.style.borderColor = '#2196f3';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = 'white';
+                                    e.currentTarget.style.borderColor = '#ddd';
+                                }}
+                            >
+                                <div style={{ fontWeight: '600', color: '#333', marginBottom: '5px' }}>
+                                    {plan.title}
+                                </div>
+                                <div style={{ fontSize: '13px', color: '#666', marginBottom: '5px' }}>
+                                    {plan.description}
+                                </div>
+                                <div style={{ fontSize: '12px', color: '#999' }}>
+                                    Saved: {plan.date}
+                                </div>
                             </div>
                         ))}
                     </div>
-                </DndContext>
-            </div>
+                )}
+                <div style={{ marginTop: '20px', textAlign: 'right' }}>
+                    <button
+                        onClick={() => setShowLoadModal(false)}
+                        style={{
+                            padding: '10px 20px',
+                            backgroundColor: '#f0f0f0',
+                            color: '#333',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                        }}
+                    >
+                        Close
+                    </button>
+                </div>
+            </Modal>
         </div>
     );
 }
