@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from "react";
 import {DndContext, useDraggable, useDroppable} from '@dnd-kit/core';
+import { useSearchParams } from "react-router";
 
 import "../styles/PlannerPrototype.css"
 
@@ -68,14 +69,25 @@ function PlannerPrototype()
     const semesters = ["FA25", "SP26", "FA26"];
     const [courses, SetCourses] = useState([
         {id: 0, semester: null, course_code: "TEST 123", course_desc: "Testing 1", prerequisites: []},
-        {id: 1, semester: null, course_code: "TEST 234", course_desc: "Testing 2", prerequisites: [{type: "AND", courses:["TEST 123"]}]},
-        {id: 2, semester: null, course_code: "TEST 234H", course_desc: "Testing 2H", prerequisites: [{type: "AND", courses:["TEST 123"]}]},
+        {id: 1, semester: null, course_code: "TEST 234", course_desc: "Testing 2", prerequisites: [{type: "AND", courses: ["TEST 123"]}]},
+        {id: 2, semester: null, course_code: "TEST 234H", course_desc: "Testing 2H", prerequisites: [{type: "AND", courses: ["TEST 123"]}]},
         {id: 3, semester: null, course_code: "TEST 345", course_desc: "Testing 3", prerequisites: [{type: "OR", courses: ["TEST 234", "TEST 234H"]}]},
     ]);
 
     const [dragging, SetDragging] = useState();
 
-    const [valid_semesters, SetValidSemesters] = useState(); //Used for keeping track of valid placements for the current course being dragged.
+    const [searchParams, SetSearchParams] = useSearchParams();
+
+    // Load Courses from URL if saved.
+    useEffect(() =>
+        {
+            const courses_string = searchParams.get("data");
+
+            if (courses_string) {
+                SetCourses(JSON.parse(decodeURIComponent(courses_string)));
+            }
+        }
+    , [searchParams])
 
     /*
 
@@ -356,6 +368,20 @@ function PlannerPrototype()
         }
     };
 
+    function handleReset()
+    {
+        const url = "/planner-prototype";
+        window.location.replace(url);
+    }
+
+    function handleSave()
+    {
+        // Save Courses to URL for Current Page
+        const courses_string = encodeURIComponent(JSON.stringify(courses));
+        const url = "/planner-prototype?data=" + courses_string;
+        window.location.replace(url);
+    }
+
     return (
         <div className="page-container">
             <div className="medium-text text-align-left">
@@ -365,6 +391,14 @@ function PlannerPrototype()
             <div style={{height: "12px"}} />
 
             <DndContext onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+                <div className="row-container" style={{gap: "12px"}}>
+                    <button onClick={handleReset}>
+                        Reset Plan
+                    </button>
+                    <button onClick={handleSave}>
+                        Save Plan
+                    </button>
+                </div>
                 <div className="row-container" style={{gap: "12px"}}>
                     <div className="course-node-group-container col-container" style={{gap: "12px"}}>
                         {
