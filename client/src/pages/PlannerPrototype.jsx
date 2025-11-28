@@ -66,12 +66,12 @@ function SemesterGroup({semester_name, children})
 
 function PlannerPrototype()
 {
-    const semesters = ["FA25", "SP26", "FA26"];
+    const semesters = ["FA2025", "SP2026", "FA2026"];
     const [courses, SetCourses] = useState([
-        {id: 0, semester: null, course_code: "TEST 123", course_desc: "Testing 1", prerequisites: []},
-        {id: 1, semester: null, course_code: "TEST 234", course_desc: "Testing 2", prerequisites: [{type: "AND", courses: ["TEST 123"]}]},
-        {id: 2, semester: null, course_code: "TEST 234H", course_desc: "Testing 2H", prerequisites: [{type: "AND", courses: ["TEST 123"]}]},
-        {id: 3, semester: null, course_code: "TEST 345", course_desc: "Testing 3", prerequisites: [{type: "OR", courses: ["TEST 234", "TEST 234H"]}]},
+        {id: 0, semester: null, course_code: "TEST 123", course_desc: "Testing 1", credits: 3, prerequisites: []},
+        {id: 1, semester: null, course_code: "TEST 234", course_desc: "Testing 2", credits: 3, prerequisites: [{type: "AND", courses: ["TEST 123"]}]},
+        {id: 2, semester: null, course_code: "TEST 234H", course_desc: "Testing 2H", credits: 3, prerequisites: [{type: "AND", courses: ["TEST 123"]}]},
+        {id: 3, semester: null, course_code: "TEST 345", course_desc: "Testing 3", credits: 3, prerequisites: [{type: "OR", courses: ["TEST 234", "TEST 234H"]}]},
     ]);
 
     const [dragging, SetDragging] = useState();
@@ -382,6 +382,14 @@ function PlannerPrototype()
         window.location.replace(url);
     }
 
+    function handleExport()
+    {
+        // Save Courses to URL of New Target Page
+        const courses_string = encodeURIComponent(JSON.stringify(courses));
+        const url = "/export?data=" + courses_string;
+        window.location.href = url;
+    }
+
     return (
         <div className="page-container">
             <div className="medium-text text-align-left">
@@ -397,6 +405,9 @@ function PlannerPrototype()
                     </button>
                     <button onClick={handleSave}>
                         Save Plan
+                    </button>
+                    <button onClick={handleExport}>
+                        Export Plan
                     </button>
                 </div>
                 <div className="row-container" style={{gap: "12px"}}>

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import TransferCoursesPage from "./pages/TransferCoursesPage";
 import Planner from "./pages/Planner";
 import PlannerPrototype from "./pages/PlannerPrototype";
+import Export from "./pages/Export";
 
 function App() {
     return (
@@ -11,6 +12,7 @@ function App() {
                 <Route path="/" element={<TransferCoursesPage />} />
                 <Route path="/planner" element={<Planner />} />
                 <Route path="/planner-prototype" element={<PlannerPrototype />} />
+                <Route path="/export" element={<Export />} />
             </Routes>
         </Router>
     );

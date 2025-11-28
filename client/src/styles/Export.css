@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+    --bg-color: rgba(255, 255, 255, 1);
+    --node-bg-color: rgba(225, 225, 225, 1);
+    --primary-text-color: rgba(0, 0, 0, 1);
+    --secondary-text-color: rgba(50, 50, 50, 1);
+}
+
+p {
+    display: inherit;
+    margin-block-start: inherit;
+    margin-block-end: inherit;
+    margin-inline-start: inherit;
+    margin-inline-end: inherit;
+    unicode-bidi: inherit;
+    white-space: pre-wrap;
+}
+
+button {
+    border: none;
+}
+
+.page-container {
+    display: flex;
+    float: center;
+    flex-direction: column;
+    align-items: center;
+    flex-wrap: nowrap;
+    align-content: space-around;
+    justify-content: flex-start;
+    width: auto;
+    min-height: 100vh;
+
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+
+    font-family: Arial, serif;
+    text-align: center;
+    font-weight: 300;
+    font-size: 14pt;
+    background-color: rgba(255, 255, 255, 1);
+    color: var(--primary-text-color);
+
+    white-space: pre-wrap;
+}
+
+.row-container {
+    display: flex;
+    float: center;
+    flex-direction: row;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    align-content: space-around;
+    justify-content: center;
+}
+
+.col-container {
+    display: flex;
+    float: center;
+    flex-direction: column;
+    align-items: center;
+    flex-wrap: nowrap;
+    align-content: space-around;
+    justify-content: center;
+}
+
+.large-text {
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 650;
+    font-size: 36pt;
+    line-height: auto;
+    white-space: nowrap;
+    text-align: center;
+    color: var(--primary-text-color);
+}
+
+.medium-text {
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 550;
+    font-size: 24pt;
+    line-height: auto;
+    white-space: nowrap;
+    text-align: center;
+    color: var(--primary-text-color);
+}
+
+.body-text {
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 650;
+    font-size: 16pt;
+    line-height: auto;
+    white-space: nowrap;
+    text-align: center;
+    color: var(--primary-text-color);
+}
+
+.text-align-left {
+    text-align: left;
+}
+
+.text-align-center {
+    text-align: center;
+}
+
+.text-align-right {
+    text-align: right;
+}
+
+.secondary-text {
+    font-family: 'Arial';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14pt;
+    line-height: auto;
+    text-align: center;
+    color: var(--secondary-text-color);
+}
+
+.pathway_year_container {
+  padding: 0px 16px;
+  margin-top: 16px;
+}
+
+.pathway_year {
+  border-top: 4px solid #FB0;
+  background-color: #FFC107;
+  color: black;
+  background-color: black;
+  color:white;
+  margin-top: 8px;
+}
+
+.year {
+  font-size: 20px;
+  font-weight: 500;
+  padding: 4px 16px;
+
+}
+
+.pathway_semester_container {
+  padding-left: 16px;
+}
+
+.semester_header {
+  background-color: #FFC107;
+  background-color: #E0E0E0;
+}
+
+.courses {
+  width: 100%;
+  padding-left: 16px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.credits {
+  padding-right: 24px;
+  padding-left: 8px;
+  text-align: center;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.credit_total_title {
+  text-align: right;
+  padding-right: 4px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
