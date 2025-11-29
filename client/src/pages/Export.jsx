@@ -92,7 +92,7 @@ function ExportedPlan()
                 // Calculate constant values for earliest year and earliest semester.
 
                 var new_earliest_year;
-                var new_earliest_semester; 
+                var new_earliest_semester;
 
                 for (var i = 0; i < courses.length; i++)
                 {
@@ -124,7 +124,7 @@ function ExportedPlan()
             {
                 yearEntryIndex = null;
 
-                if (SemesterToInt(courses[i].semester) === 0)
+                if (SemesterToInt(courses[i]["semester"]) === 0)
                 {
                     continue;
                 }
