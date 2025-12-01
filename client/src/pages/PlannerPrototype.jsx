@@ -1,6 +1,10 @@
 import React, {useState, useEffect} from "react";
 import {DndContext, useDraggable, useDroppable} from '@dnd-kit/core';
 import { useSearchParams } from "react-router-dom";
+
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+
 import '../styles/PlannerPrototype.css';
 
 // Draggable Component
@@ -12,7 +16,8 @@ function Draggable(props) {
     const style = {
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
         opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 1000 : 'auto',
+        //position: isDragging ? "fixed" : undefined,
+        //width: isDragging ? "inherit" : undefined,
     };
   
     return (
@@ -86,7 +91,7 @@ function SidebarCategory({title, courses, isExpanded, onToggle}) {
 }
 
 function PlannerPrototype() {
-    const semesters = ["FA2025", "SP2026", "FA2026", "SP2027", "FA2027", "SP2028", "FA2028", "SP2028"];
+    const semesters = ["FA2025", "SP2026", "FA2026", "SP2027", "FA2027", "SP2028", "FA2028", "SP2029"];
     const [courses, SetCourses] = useState([]);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [expandedCategories, setExpandedCategories] = useState({
@@ -95,6 +100,9 @@ function PlannerPrototype() {
         'Core': true,
         'Elective': false
     });
+
+    const [alert_warning_text, SetAlertWarningText] = useState("");
+    const [alert_error_text, SetAlertErrorText] = useState("");
 
     // Categorize courses based on course codes
     const categorizeCourses = (coursesList) => {
@@ -255,6 +263,7 @@ function PlannerPrototype() {
             }
 
             console.log(return_msg);
+            SetAlertWarningText(return_msg);
             return false;
         }
 
@@ -298,6 +307,7 @@ function PlannerPrototype() {
                         if (courses[i]["prerequisites"][v]["courses"].length > 0 && clause_satisfied === false) {
                             var return_msg = courses[i]["course_code"] + " Requires Prerequisite " + dragged_course["course_code"];
                             console.log(return_msg);
+                            SetAlertWarningText(return_msg);
                             return false;
                         }
                     }
@@ -314,6 +324,8 @@ function PlannerPrototype() {
 
     function handleDragOver(event) {
         const {over} = event;
+        //SetAlertWarningText("");
+        //SetAlertErrorText("");
     }
 
     function handleDragEnd(event) {
@@ -368,6 +380,7 @@ function PlannerPrototype() {
                     className={`sidebar-toggle ${!sidebarOpen ? 'closed' : ''}`}
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                     aria-label="Toggle Sidebar"
+                    style={{zIndex: 1}}
                 >
                     {sidebarOpen ? '◀' : '▶'}
                 </button>
@@ -375,9 +388,9 @@ function PlannerPrototype() {
                 {/* Sidebar */}
                 <aside className={`sidebar ${!sidebarOpen ? 'closed' : ''}`}>
                     <div className="sidebar-header">
-                        <button 
-                        onClick={() => window.location.href = '/'}
-                        className="back-button" >Back to TES</button>
+                        <button onClick={() => window.location.href = '/'} className="back-button">
+                            Back to TES
+                        </button>
                     </div>
                     
                     <div className="sidebar-categories">
@@ -394,7 +407,27 @@ function PlannerPrototype() {
                 </aside>
 
                 {/* Main Content */}
-                <main className={`main-content ${!sidebarOpen ? 'sidebar-closed' : ''}`}>
+                <div className={`main-content ${!sidebarOpen ? 'sidebar-closed' : ''}`}>
+                    { 
+                        alert_warning_text !== "" && (
+                            <Alert severity="warning" onClose={() => {SetAlertWarningText("")}} style={{zIndex: 99}}>
+                                <AlertTitle>
+                                    Warning
+                                </AlertTitle>
+                                {alert_warning_text};
+                            </Alert>
+                        )
+                    }
+                    { 
+                        alert_error_text !== "" && (
+                            <Alert severity="error" onClose={() => {SetAlertErrorText("")}} style={{zIndex: 99}}>
+                                <AlertTitle>
+                                    Error
+                                </AlertTitle>
+                                {alert_error_text};
+                            </Alert>
+                        )
+                    }
                     <div className="page-header">
                         <h1 className="page-title">Course Plan</h1>
                         <div className="action-buttons">
@@ -425,7 +458,7 @@ function PlannerPrototype() {
                             </SemesterGroup>
                         ))}
                     </div>
-                </main>
+                </div>
             </div>
         </DndContext>
     );

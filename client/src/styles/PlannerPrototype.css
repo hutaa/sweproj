@@ -31,7 +31,7 @@ body {
     display: flex;
     min-height: 100vh;
     width: 100%;
-    position: relative;
+    position: absolute;
 }
 
 /* Sidebar Toggle Button */
@@ -39,7 +39,6 @@ body {
     position: fixed;
     left: 245px;
     top: 20px;
-    z-index: 1001;
     background-color: var(--umbc-black);
     color: var(--umbc-gold);
     border: none;
@@ -80,9 +79,9 @@ body {
     left: 0;
     top: 0;
     height: 100vh;
-    overflow-y: auto;
+    overflow: visible;
+    /*overflow-y: auto;*/
     transition: transform 0.3s ease;
-    z-index: 1000;
 }
 
 .sidebar.closed {
@@ -180,7 +179,7 @@ body {
     border-radius: 4px;
     cursor: grab;
     text-align: left;
-    transition: all 0.15s ease;
+    transition: background-color border-color border-radius border-width color height padding width 0.15s ease;
     will-change: transform;
 }
 
@@ -200,7 +199,8 @@ body {
     flex: 1;
     margin-left: 280px;
     padding: 24px;
-    overflow-x: auto;
+    overflow: visible;
+    /*overflow-x: auto;*/
     transition: margin-left 0.3s ease;
 }
 
@@ -234,13 +234,12 @@ body {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color border-color border-radius border-width color height padding width 0.2s;
     display: flex;
     align-items: center;
     gap: 8px;
     
 }
-
 
 .btn-save {
     background-color: var(--umbc-black);
@@ -301,7 +300,7 @@ body {
     border-radius: 8px;
     padding: 16px;
     min-height: 400px;
-    transition: all 0.15s ease;
+    transition: background-color border-color border-radius border-width color height padding width 0.15s ease;
 }
 
 .semester-column:hover {
@@ -333,7 +332,7 @@ body {
     border-radius: 6px;
     cursor: grab;
     text-align: center;
-    transition: all 0.15s ease;
+    transition: background-color border-color border-radius border-width color height padding width 0.15s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     will-change: transform;
     pointer-events: auto;
@@ -432,22 +431,9 @@ body {
     }
 }
 
-/* Performance optimizations for dragging */
-button[draggable="true"] {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
-
 /* Improve drag visual feedback */
 .course-node {
     position: relative;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-}
-
-/* Ensure dragged items stay visible */
-[data-dnd-kit-draggable] {
-    z-index: 999 !important;
 }
