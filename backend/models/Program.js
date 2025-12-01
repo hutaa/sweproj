@@ -1,3 +1,4 @@
+// program.js
 import mongoose from "mongoose";
 
 const courseRequirementSchema = new mongoose.Schema({
@@ -33,7 +34,7 @@ const electiveGroupSchema = new mongoose.Schema({
 
 const requirementsSchema = new mongoose.Schema({
   required_courses: {
-    computer_science: [courseRequirementSchema],
+    cs_core: [courseRequirementSchema],
     math: [courseRequirementSchema],
     statistics: [courseRequirementSchema],
     science_sequences: scienceSequenceSchema

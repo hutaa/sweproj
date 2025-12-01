@@ -124,7 +124,7 @@ function ExportedPlan()
             {
                 yearEntryIndex = null;
 
-                if (SemesterToInt(courses[i]["semester"]) === 0)
+                if (!(courses[i]) || !(courses[i]["semester"]) || SemesterToInt(courses[i]["semester"]) === 0)
                 {
                     continue;
                 }

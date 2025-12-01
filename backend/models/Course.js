@@ -1,3 +1,4 @@
+//course.js
 import mongoose from "mongoose";
 
 const prerequisiteSchema = new mongoose.Schema({

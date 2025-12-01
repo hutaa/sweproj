@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import '../styles/TransferCoursesPage.css';
 function TransferCoursesPage() {
   const [rows, setRows] = useState([
     { id: 1, university: "", course: "", grade: "", equivalent: "", notes: "" }
@@ -150,7 +150,7 @@ function TransferCoursesPage() {
       minHeight: '100vh'
     }}>
       <h1 style={{ 
-        color: '#333',
+        color: '#000000',
         marginBottom: '30px',
         fontSize: '2rem',
         fontWeight: '600'
@@ -170,9 +170,11 @@ function TransferCoursesPage() {
               onClick={() => toggleSite(site.key)}
               style={{
                 padding: '10px 20px',
-                backgroundColor: expandedSites[site.key] ? '#d32f2f' : '#1976d2',
-                color: 'white',
-                border: 'none',
+                backgroundColor: expandedSites[site.key] ? '#000000' : '#fdb515',
+                color: expandedSites[site.key] ? '#fdb515' : '#000000',
+                border: '#000000',
+                borderWidth: '2px',
+                borderStyle: 'solid',
                 borderRadius: '6px',
                 cursor: 'pointer',
                 fontSize: '14px',
@@ -180,14 +182,14 @@ function TransferCoursesPage() {
                 transition: 'all 0.3s ease'
               }}
             >
-              {expandedSites[site.key] ? '✕' : '🔗'} {site.name}
+              {expandedSites[site.key] ? '✕' : ' '} {site.name}
             </button>
           ))}
           <button
             onClick={openAllSites}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#388e3c',
+              backgroundColor: '#007176',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -203,7 +205,7 @@ function TransferCoursesPage() {
               onClick={closeAllSites}
               style={{
                 padding: '10px 20px',
-                backgroundColor: '#f57c00',
+                backgroundColor: '#da2128',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -251,7 +253,7 @@ function TransferCoursesPage() {
                         onClick={() => toggleSite(site.key)}
                         style={{
                           padding: '4px 12px',
-                          backgroundColor: '#d32f2f',
+                          backgroundColor: '#da2128',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -293,7 +295,7 @@ function TransferCoursesPage() {
                           marginBottom: '12px',
                           fontSize: '13px' 
                         }}>
-                          ⚠️ Cannot embed due to security restrictions
+                          ⚠️ Cannot open this website here
                         </p>
                         <button
                           onClick={() => openInNewWindow(site.url)}
@@ -440,19 +442,18 @@ function TransferCoursesPage() {
 
       <div style={{ marginTop: '30px', textAlign: 'center' }}>
         <button
-          onClick={() => window.location.href = '/planner'}
+          onClick={() => window.location.href = '/planner-prototype'}
           style={{
             padding: '12px 30px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            border: 'none',
+            background: '#000000',
+            color: '#fdb515',
             borderRadius: '6px',
             cursor: 'pointer',
             fontSize: '16px',
             fontWeight: '500'
           }}
         >
-          Go to Planner Page ➡
+          Go to Planner
         </button>
       </div>
     </div>

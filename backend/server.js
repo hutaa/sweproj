@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import Course from "./models/Course.js";
 import Program from "./models/Program.js";
+import Plan from "./models/Plan.js";
+
 
 dotenv.config();
 
@@ -91,3 +93,4 @@ app.get("/api/debug", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
