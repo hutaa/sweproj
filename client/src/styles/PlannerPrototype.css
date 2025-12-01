@@ -119,6 +119,7 @@ body {
 .sidebar-categories {
     flex: 1;
     padding: 8px 0;
+    overflow-y: scroll;
 }
 
 /* Sidebar Category */
