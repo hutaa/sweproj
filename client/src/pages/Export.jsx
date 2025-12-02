@@ -1,6 +1,10 @@
 import React, {useState, useEffect} from "react";
 import { useSearchParams } from "react-router";
 
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+
 import "../styles/Export.css"
 
 function CourseEntry({courseText, credits = 0})
@@ -80,6 +84,8 @@ function ExportedPlan()
     const [formattedPlan, SetFormattedPlan] = useState([
         // {year: 0, semesterOne: {semester: "", courses: [], totalCredits: 0}, semesterTwo: {semester: "", courses: [], totalCredits: 0}}
     ]);
+
+    const [alert_success_text, SetAlertSuccessText] = useState("");
     
     // Load Courses from URL if saved.
     useEffect(() =>
@@ -213,8 +219,56 @@ function ExportedPlan()
         return 0;
     }
 
+    function ExportAsMarkdown()
+    {
+        var exported_string = "&nbsp;|&nbsp;|&nbsp;|&nbsp;\n-|-|-|-\n"
+        // {year: 0, semesterOne: {semester: "", courses: [], totalCredits: 0}, semesterTwo: {semester: "", courses: [], totalCredits: 0}}
+        for (var y = 0; y < formattedPlan.length; y++)
+        {
+            exported_string += formattedPlan[y]["semesterOne"]["totalCredits"] > 0 ? "Spring " + formattedPlan[y]["year"] + " Semester|Credits|" : "&nbsp;|&nbsp;|";
+            exported_string += formattedPlan[y]["semesterTwo"]["totalCredits"] > 0 ? "Fall " + formattedPlan[y]["year"] + " Semester|Credits" : "&nbsp;|&nbsp;";
+            exported_string += "\n";
+
+            for (var c = 0; c < Math.max(formattedPlan[y]["semesterOne"]["courses"].length, formattedPlan[y]["semesterTwo"]["courses"].length); c++)
+            {
+                exported_string += c < formattedPlan[y]["semesterOne"]["courses"].length
+                    ? formattedPlan[y]["semesterOne"]["courses"][c].course_code + " "
+                    + formattedPlan[y]["semesterOne"]["courses"][c].course_desc + "|"
+                    + formattedPlan[y]["semesterOne"]["courses"][c].credits + "|"
+                    : "&nbsp;|&nbsp;|";
+                exported_string += c < formattedPlan[y]["semesterTwo"]["courses"].length
+                    ? formattedPlan[y]["semesterTwo"]["courses"][c].course_code + " "
+                    + formattedPlan[y]["semesterTwo"]["courses"][c].course_desc + "|"
+                    + formattedPlan[y]["semesterTwo"]["courses"][c].credits
+                    : "&nbsp;|&nbsp;";
+                exported_string += "\n";
+            }
+
+            exported_string += (formattedPlan[y]["semesterOne"]["courses"].length === 0 ? "&nbsp;|&nbsp;" : "Total|" + formattedPlan[y]["semesterOne"]["totalCredits"]) + "|";
+            exported_string += (formattedPlan[y]["semesterTwo"]["courses"].length === 0 ? "&nbsp;|&nbsp;" : "Total|" + formattedPlan[y]["semesterTwo"]["totalCredits"]) + "|";
+            exported_string += "\n&nbsp;|&nbsp;|&nbsp;|&nbsp;\n";
+        }
+
+        navigator.clipboard.writeText(exported_string);
+        SetAlertSuccessText("Copied to Clipboard");
+    }
+
     return (
         <div className="page-container">
+            {
+                alert_success_text !== "" && (
+                    <Alert severity="success" onClose={() => {SetAlertSuccessText("")}} style={{position: "absolute", zIndex: 99}}>
+                        <AlertTitle style={{textAlign: "left"}}>
+                            Success
+                        </AlertTitle>
+                        {alert_success_text};
+                    </Alert>
+                )
+            }
+            <div style={{height: "100px"}} />
+            <Button variant="contained" onClick={() => {ExportAsMarkdown()}}>
+                Export as Markdown
+            </Button>
             <div style={{height: "50px"}} />
             {
                 formattedPlan.map((year) => (
